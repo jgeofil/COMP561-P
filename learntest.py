@@ -4,6 +4,13 @@ from sklearn import neighbors
 from sklearn.model_selection import LeaveOneOut
 from sklearn.neural_network import MLPClassifier
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import KFold
+from collections import Counter
+import math
+from sklearn.ensemble import AdaBoostClassifier
+from sklearn.naive_bayes import MultinomialNB
+
+np.set_printoptions(edgeitems=15)
 
 LABELS = [0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,2,2,2,2,2,3,3,
 3,3,3,3,3,4,4,4,4,4,4,4,4,4,4,5,5,5,5,5,5,5,5,5,5,6,6,6,6,6,6,6,6,7,7,7,7,7,7,7,
@@ -26,88 +33,92 @@ weights= np.array(weights).astype('float')
 
 splits = np.array(splits).transpose().astype('int')
 
+#print splits
+
 splits = np.array(splits)
 LABELS = np.array(LABELS)
-
-'''
-loo = LeaveOneOut()
-res = []
-proba = []
-for train, test in loo.split(splits):
-    clf = RandomForestClassifier(n_estimators=50, min_samples_split=2, verbose=False, max_features=None)
-    clf.fit(splits[train], LABELS[train])
-    res.append(clf.predict(splits[test])[0])
-    proba.append(clf.predict_proba(splits[test])[0])
-    #print names[test], res[test], LABELS[test], proba[test]
-for i in range(len(LABELS)):
-    print names[i], res[i], LABELS[i], max(proba[i])
-
-print (np.array(res) == LABELS).sum()/float(len(splits))
-'''
-
 '''
 loo = LeaveOneOut()
 res = []
 for train, test in loo.split(splits):
-    clf = MLPClassifier(solver='sgd', alpha=1e-4, hidden_layer_sizes=(200, 10), random_state=1, verbose=False, max_iter=400)
+
+    clf = AdaBoostClassifier(n_estimators=200)
+    clf.fit(splits[train], LABELS[train])
+    pred = np.array(clf.predict(splits[test]))
+    res.append((pred == LABELS[test]).sum()/float(len(LABELS[test])))
+print sum(res)/float(len(LABELS))
+'''
+
+
+def entro(cats):
+    counts = Counter(cats)
+    tot = []
+    for c in np.unique(LABELS):
+        ratio = counts[c]/float(len(cats))
+        tot.append(ratio*math.log(ratio,2) if ratio else 0)
+    return -sum(tot)
+
+
+entropy = []
+for s in splits.T:
+    isone = s == 1
+    a,b = LABELS[isone],LABELS[np.invert(isone)]
+    #entropy.append(max([len(a)/float(len(b)), len(b)/float(len(a))]))
+    entropy.append((len(a)/float(len(LABELS))*entro(a))+(len(b)/float(len(LABELS))*entro(b)))
+
+
+
+'''
+
+
+for numEst in range(10, 110, 10):
+    loo = LeaveOneOut()
+    trainres = []
+    res = []
+    predRes = []
+    for train, test in loo.split(splits):
+        clf = RandomForestClassifier(n_estimators=numEst,
+                                    min_samples_split=2,
+                                    verbose=False,
+                                    max_features=None,
+                                    n_jobs=-1)
+        clf.fit(splits[train], LABELS[train])
+        pred = np.array(clf.predict(splits[test]))
+        predRes.append(np.array(clf.score(splits[train], LABELS[train])))
+        res.append((pred == LABELS[test]).sum()/float(len(LABELS[test])))
+    for i in range(len(LABELS)):
+        print res[i], LABELS[i]
+    print sum(res)/float(len(LABELS)), numEst, sum(predRes)/float(len(LABELS))
+
+
+
+'''
+
+
+def funcDist(X,Y):
+    return sum([ 0 if x==y else e for x,y,e in zip(X,Y,weights)])
+
+'''
+loo = LeaveOneOut()
+for n_neighbors in range(1,15):
+    res = []
+    for train, test in loo.split(splits):
+        clf = neighbors.KNeighborsClassifier(n_neighbors, weights='distance')
+        clf.fit(splits[train], LABELS[train])
+        res.append(clf.predict(splits[test])[0])
+    #for i in range(len(LABELS)):
+    #    print res[i], LABELS[i], names[i]
+    print (np.array(res) == LABELS).sum()/float(len(LABELS))
+    print LABELS[np.array(res) != LABELS]
+'''
+
+loo = LeaveOneOut()
+res = []
+for train, test in loo.split(splits):
+    clf =  MultinomialNB()
     clf.fit(splits[train], LABELS[train])
     res.append(clf.predict(splits[test])[0])
-    print names[test], res[test], LABELS[test]
 for i in range(len(LABELS)):
-    print names[i], res[i], LABELS[i]
-
-print (np.array(res) == LABELS).sum()/float(len(splits))
-'''
-
-'''
-def funcDist(X,Y):
-    dist = sum([0 if x == y else w for (x,y,w) in zip(X,Y,weights)])
-    return dist
-
-
-n_neighbors = 4
-loo = LeaveOneOut()
-
-for dist in ['jaccard','matching','dice','kulsinski','rogerstanimoto','russellrao','sokalmichener','sokalsneath']:
-    res = []
-    for train, test in loo.split(splits):
-        clf = neighbors.KNeighborsClassifier(n_neighbors, metric=dist, weights='distance')
-        clf.fit(splits[train], LABELS[train])
-        res.append(clf.predict(splits[test])[0])
-    #for i in range(len(LABELS)):
-    #    print names[i], res[i], LABELS[i]
-    print (np.array(res) == LABELS).sum()/float(len(splits))
-
-'''
-
-
-def funcDist(X,Y):
-    dist = sum([0 if x == y else w for (x,y,w) in zip(X,Y,weights)])
-    return dist
-
-n_neighbors = 4
-loo = LeaveOneOut()
-
-for dist in [1]:
-    res = []
-    for train, test in loo.split(splits):
-        clf = neighbors.KNeighborsClassifier(n_neighbors, weights='distance', metric=funcDist)
-        clf.fit(splits[train], LABELS[train])
-        res.append(clf.predict(splits[test])[0])
-    #for i in range(len(LABELS)):
-    #    print names[i], res[i], LABELS[i]
-    print (np.array(res) == LABELS).sum()/float(len(splits))
-
-
-
-
-'''
-from sklearn.decomposition import PCA
-import matplotlib.pyplot as plt
-
-pca = PCA(n_components=2)
-pca.fit(splits)
-comp = pca.components_
-plt.scatter(comp[0], comp[1])
-plt.show()
-'''
+    print res[i], LABELS[i], names[i]
+print ((np.array(res) == LABELS).sum())/float(len(LABELS))
+print LABELS[np.array(res) != LABELS]
