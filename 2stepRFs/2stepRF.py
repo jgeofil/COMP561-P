@@ -5,6 +5,7 @@ from scipy.stats import wilcoxon
 from scipy.stats import mannwhitneyu
 from scipy.stats import chi2_contingency
 from sklearn.cross_validation import LeaveOneOut
+from sklearn.model_selection import KFold
 
 import logging
 logging.basicConfig(filename='loo.log',level=logging.DEBUG)
@@ -37,8 +38,11 @@ with open('data/in.txt') as f:
             shadowO.append(np.random.permutation(s[9:]))
 
 dataO = np.array(dataO)
+
+kf = KFold(n_splits=5)
 Kf = 0
-loo = LeaveOneOut(len(np.array(dataO).T))
+loo = kf.split(np.array(dataO).T)
+#loo = LeaveOneOut(len(np.array(dataO).T))
 #testSplits = loo.split(np.array(dataO).T)
 
 for train, test in loo:
@@ -127,20 +131,3 @@ for train, test in loo:
         logging.info(str(res))
         logging.info(str(LABELS[test]))
         logging.info(str(pred[0]))
-
-
-        '''
-        loo = LeaveOneOut()
-        res = []
-        proba = []
-        for train, test in loo.split(np.concatenate((OkSNPs,GreatSNPs,GreatSNPs), axis=1)):
-            clf = RandomForestClassifier(n_estimators=100, verbose=True, n_jobs=-1)
-            clf.fit(WilPassedSNPs[train], LABELS[train])
-            res.append(clf.predict(WilPassedSNPs[test])[0])
-            proba.append(clf.predict_proba(WilPassedSNPs[test])[0])
-        for i in range(len(LABELS)-1):
-            print res[i], LABELS[i], max(proba[i])
-
-        print len(WilPassedSNPs)
-        print (res == LABELS).sum()/float(len(WilPassedSNPs))
-        '''

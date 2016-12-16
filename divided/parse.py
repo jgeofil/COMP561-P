@@ -48,13 +48,15 @@ with open(DATA+'in.txt') as f:
     strio = stringIOArray(SIZE)
 
     lines = f.readlines()
-    lastContig = ''
+    lastContig = 'scaffold_1'
+    count = 0
     for l in lines:
+
         if l[0] != '#':
             s = l.split()
-            if s[0] == lastContig or lastContig == '':
-                if lastContig == '':
-                    lastContig = s[0]
+            if s[0] == 'scaffold_1':
+                count +=1
+            if s[0] == lastContig:
                 for i, c in enumerate(s[9:]):
                     if int(c) == 0:
                         cha = s[3]
@@ -62,7 +64,9 @@ with open(DATA+'in.txt') as f:
                         cha = s[4]
                     strio[i].write(cha)
             else:
+                print count
                 lastContig = s[0]
+                print lastContig
                 contigs.append(strio)
                 strio = stringIOArray(SIZE)
     contigs.append(strio)

@@ -16,9 +16,10 @@ LABELS = np.array([0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,2,2,2
 
 dataList = []
 
-if False:
+if True:
 
-    for fname in files:
+    for iname in range(len(files)):
+        fname = 'data/divided/splits'+str(iname)+'.nex'
 
         splitsList = []
 
@@ -51,6 +52,7 @@ if False:
 
         splitsList = np.array(splitsList).transpose()
         dataList.append(splitsList)
+        print splitsList.shape
 
     resMat = []
     for data in dataList:
@@ -58,17 +60,36 @@ if False:
         res = []
         for train, test in loo.split(data):
             clf = RandomForestClassifier(n_estimators=50,
-                                        verbose=True,
+                                        verbose=False,
                                         n_jobs=-1)
             clf.fit(data[train], LABELS[train])
+            print np.argmax(clf.predict_proba(data[test])[0]) == LABELS[test]
             res.append(clf.predict_proba(data[test])[0].tolist())
         resMat.append(res)
 
     np.save('resmat',resMat)
 resMat = np.load('resmat.npy')
 print resMat.shape
+
+flat = []
+for cat, catvals in enumerate(resMat):
+    for ind, indvals in enumerate(catvals):
+
+        flat.append([cat, ind] + indvals.tolist())
+
+print flat
+
+f = open('fullprob.csv', 'w')
+
+spamwriter = csv.writer(f, delimiter=',')
+for j, seq in enumerate(flat):
+    spamwriter.writerow(seq)
+
+
+'''
 count = resMat.shape[0]
 resMat = np.sum(resMat, axis=0)
+
 
 resMat = resMat/float(count)
 #print resMat
@@ -76,8 +97,10 @@ resMat = resMat/float(count)
 argMax = [np.argmax(r) for r in resMat]
 print argMax == LABELS
 
+
 f = open('prob.tsv', 'w')
 
 spamwriter = csv.writer(f, delimiter=' ')
 for j, seq in enumerate(resMat):
     spamwriter.writerow(seq)
+'''
