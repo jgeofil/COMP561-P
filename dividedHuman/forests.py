@@ -66,7 +66,7 @@ if True:
         loo = LeaveOneOut()
         res = []
         for train, test in loo.split(data):
-            clf = RandomForestClassifier(n_estimators=60,
+            clf = RandomForestClassifier(n_estimators=10,
                                         verbose=False,
                                         n_jobs=-1)
             clf.fit(data[train], LABELS[train])

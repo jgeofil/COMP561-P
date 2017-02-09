@@ -48,11 +48,11 @@ def writeFooter(f,i):
 
 contigs = []
 
-files = glob.glob('data/human/out*.recode.vcf')
+files = glob.glob('data/human/chr*.recode.vcf')
 print files
 
 for fix,f in enumerate(files):
-
+    filename = str(f).split('/')[-1].split('.')[0]
     with open(f) as f:
         strio = stringIOArray(SIZE)
 
@@ -72,10 +72,10 @@ for fix,f in enumerate(files):
                     else:
                         cha2 = s[4]
                     strio[i].write(cha)
-                    #out[i].write(cha2)
+                    strio[i].write(cha2)
 
         print('Writing '+str(f))
-        fo = open(DATA+'out'+str(fix)+'.nex', 'w')
+        fo = open(DATA+filename+'.nex', 'w')
 
         for j, seq in enumerate(strio):
             strio[j] = seq.getvalue()
