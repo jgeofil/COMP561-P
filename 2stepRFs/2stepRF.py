@@ -10,7 +10,7 @@ from sklearn.model_selection import KFold
 import logging
 logging.basicConfig(filename='loo.log',level=logging.DEBUG)
 
-SNPS = 1600000
+SNPS = 160000
 R = 30
 mtry = 0.5
 THETA = 0.05
@@ -82,6 +82,10 @@ for train, test in loo:
                     pValues.append(p)
                 else:
                     pValues.append(float('inf'))
+            import matplotlib.pyplot as plt
+            plt.plot(pValues)
+            plt.ylabel('some numbers')
+            plt.show()
 
             print 'Ranking SNPs...'
             pValueIndexes = []

@@ -25,11 +25,11 @@ def funcDist(X,Y):
     x0 = np.argmin(X)
     y0 = np.argmin(Y)
 
-    dist = abs(X[x0]-Y[y0])
+    dist = abs(X[y0])
 
     return dist
 
-n_neighbors = 3
+n_neighbors = 1
 loo = LeaveOneOut()
 
 res = []

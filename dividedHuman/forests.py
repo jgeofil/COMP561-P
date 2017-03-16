@@ -8,24 +8,26 @@ import csv
 
 cwd = os.getcwd()
 
-files = glob.glob('data/human/splits1.nex')
+files = glob.glob('data/human/splits.chr*.nex')
 
-label = open('data/human/outpops.txt')
+label = open('data/human/outsuper.txt')
 
 labels =[]
 for l in label.readlines():
     labels.append(l.rstrip())
 
 print labels
+print len(labels)
 LABELS = np.array(labels)
 
 dataList = []
+classes = []
 
 if True:
 
-    for iname in range(len(files)):
-        fname = 'data/human/splits'+str(iname)+'.nex'
-
+    for iname in files:
+        fname = iname
+        print fname
         splitsList = []
 
         with open(fname, 'rb') as f:
@@ -61,68 +63,34 @@ if True:
         print splitsList.shape
 
     resMat = []
-    trueclass = []
+
     for data in dataList:
+        trueclass = []
         loo = LeaveOneOut()
         res = []
         for train, test in loo.split(data):
-            clf = RandomForestClassifier(n_estimators=10,
+            clf = RandomForestClassifier(n_estimators=60,
                                         verbose=False,
                                         n_jobs=-1)
             clf.fit(data[train], LABELS[train])
-            print clf.predict(data[test])[0],  LABELS[test][0]
-            trueclass.append(clf.predict(data[test])[0] == LABELS[test][0])
+            classes = clf.classes_
+            np.save('classes', classes)
+            #print clf.predict(data[test])[0],  LABELS[test][0]
+            trueclass.append(clf.predict(data[test])[0])
             res.append(clf.predict_proba(data[test])[0].tolist())
         resMat.append(res)
+        print trueclass
+        print np.array(trueclass == LABELS).sum()/float(156)
 
     np.save('resmat',resMat)
-    print np.array(trueclass).sum()/float(156)
+
 
 resMat = np.load('resmat.npy')
-print resMat.shape
+classes = np.load('classes.npy')
 
-flat = []
-for cat, catvals in enumerate(resMat):
-    for ind, indvals in enumerate(catvals):
-
-        flat.append([cat, ind] + indvals.tolist())
-
-print flat
-
-f = open('fullprob.csv', 'w')
-'''
-spamwriter = csv.writer(f, delimiter=',')
-for j, seq in enumerate(flat):
-    spamwriter.writerow(seq)
-
-catsnum = []
-for i in range(26):
-    for j in range(5):
-        catsnum.append(i)
-catsnum = np.array(catsnum)
-
-
-'''
-count = resMat.shape[0]
-resMat = np.sum(resMat, axis=0)
-
-
-resMat = resMat/float(count)
-#print resMat
-
-argMax = [np.argmax(r) for r in resMat]
-print argMax
-
-classes = []
-for i in range(26):
-    for j in range(6):
-        classes.append(i)
-classes = np.array(classes)
-print (classes == argMax).sum()
-
-
-f = open('prob.tsv', 'w')
-
-spamwriter = csv.writer(f, delimiter=' ')
-for j, seq in enumerate(resMat):
-    spamwriter.writerow(seq)
+avgMat = np.average(resMat, axis=0)
+#for oneEst in resMat:
+argClass = map(np.argmax, avgMat)
+argName = map(lambda x: classes[x], argClass)
+print argName
+print (argName == LABELS).sum()/float(156)

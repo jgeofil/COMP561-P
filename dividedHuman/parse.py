@@ -31,7 +31,8 @@ def writeHeader(f, name, numTaxa, numChar):
     f.write('format datatype=dna;\n')
     f.write('matrix\n')
 
-def writeFooter(f,i):
+def writeFooter(f,i,fn):
+    filename = str(fn).split('/')[-1].split('.')[0]
     f.write(';\nend;\n')
     f.write('BEGIN st_Assumptions;\n')
     f.write('\tchartransform=Uncorrected_P;\n')
@@ -41,14 +42,14 @@ def writeFooter(f,i):
     f.write('END; [st_Assumptions]\n\n')
     f.write('begin SplitsTree;\n')
     f.write('\tUPDATE;\n')
-    f.write('\tEXPORT FILE='+cwd+'/'+DATA+'splits'+str(i)+'.nex REPLACE=yes;\n')
+    f.write('\tEXPORT FILE='+cwd+'/'+DATA+'splits.'+str(filename)+'.nex REPLACE=yes;\n')
     f.write('\tQUIT;\n')
     f.write('end;\n')
 
 
 contigs = []
 
-files = glob.glob('data/human/chr*.recode.vcf')
+files = glob.glob('data/human/chr22.recode.vcf')
 print files
 
 for fix,f in enumerate(files):
@@ -83,7 +84,7 @@ for fix,f in enumerate(files):
         writeHeader(fo,i,SIZE, len(strio[0]))
         for j, seq in enumerate(strio):
             fo.write(str(labels[j])+'\t'+seq+'\n')
-        writeFooter(fo,fix)
+        writeFooter(fo,fix,f)
         fo.close()
 
         strio = stringIOArray(SIZE)

@@ -4,10 +4,10 @@ import glob
 
 cwd = os.getcwd()
 
-files = glob.glob('data/human/out*.nex')
+files = glob.glob('data/human/chr2.nex')
 print files
-for f in range(len(files)):
-    bashCommand = '/home/jay/splitstree4/SplitsTree -g -i '+cwd+'/'+'data/human/out'+str(f)+'.nex'
+for f in files:
+    bashCommand = '/home/jay/splitstree4/SplitsTree -g -m -v -i '+cwd+'/'+str(f)
     print bashCommand
 
     process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
